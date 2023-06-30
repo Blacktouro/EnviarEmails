@@ -1,0 +1,72 @@
+import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from datetime import datetime
+import time
+
+def criar_pasta(caminho):
+    try:
+        os.makedirs(caminho)
+        print("Pasta criada com sucesso!")
+    except FileExistsError:
+        print("A pasta já existe!")
+
+def enviar_email(destinatario, assunto, corpo):
+    remetente = "######"  # Insira o endereço de e-mail do remetente
+    senha = "###########"  # Insira a senha do remetente
+
+    mensagem = MIMEMultipart()
+    mensagem["From"] = remetente
+    mensagem["To"] = destinatario
+    mensagem["Subject"] = assunto
+
+    mensagem.attach(MIMEText(corpo, "plain"))
+
+    try:
+        servidor_smtp = smtplib.SMTP("smtp.sapo.pt", 587)
+        servidor_smtp.starttls()
+        servidor_smtp.login(remetente, senha)
+        servidor_smtp.send_message(mensagem)
+        servidor_smtp.quit()
+        print("E-mail enviado com sucesso!")
+
+        # Salvar uma cópia do e-mail na pasta especificada
+        data_atual = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        nome_arquivo = f"email_{data_atual}.txt"
+        caminho_arquivo = os.path.join("/home/andre/Documentos/pasta_de_teste", nome_arquivo)
+
+        with open(caminho_arquivo, "w") as arquivo:
+            arquivo.write(f"Remetente: {remetente}\n")
+            arquivo.write(f"Destinatário: {destinatario}\n")
+            arquivo.write(f"Assunto: {assunto}\n\n")
+            arquivo.write(corpo)
+
+        print(f"Cópia do e-mail salva em: {caminho_arquivo}")
+
+
+
+    except Exception as e:
+        print(f"Ocorreu um erro ao enviar o e-mail: {e}")
+
+
+def enviar_email_periodicamente(destinatario, assunto, corpo):
+    while True:
+        # Chamar a função enviar_email
+        enviar_email(destinatario, assunto, corpo)
+        
+        # Aguardar 1 minuto antes de enviar o próximo e-mail
+        time.sleep(60)  # 60 segundos = 1 minuto   
+    
+
+if __name__ == "__main__":
+    # Defina o caminho da pasta que deseja criar
+    caminho_pasta = "/home/andre/Documentos/pasta_de_teste"
+    criar_pasta(caminho_pasta)
+    
+    # Defina as informações do e-mail
+    destinatario = "###########"
+    assunto = "E-mail de teste"
+    corpo = "Este é um e-mail de teste enviado através do programa Python."
+
+    enviar_email_periodicamente(destinatario, assunto, corpo)
